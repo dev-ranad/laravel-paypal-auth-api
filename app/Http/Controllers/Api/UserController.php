@@ -97,8 +97,6 @@ class UserController extends Controller
                 return response()->json($message, 422);
             }
         }
-        // return view('verified')->with(['otp' => $otp, 'email' => $request->email]);
-        // return response()->json([$message, 'access_token' => $access_token], 201);
     }
 
     public function login(Request $request)
@@ -133,4 +131,6 @@ class UserController extends Controller
         $message = 'User Successfully Logout';
         return response()->json($message, 201);
     }
+
+
 }
