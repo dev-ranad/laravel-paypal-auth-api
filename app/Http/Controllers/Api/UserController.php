@@ -93,6 +93,9 @@ class UserController extends Controller
                 User::where('email', $pre_data->email)->update(['access_token' => $access_token]);
                 $message = 'User Successfully Registerd';
                 return response()->json([$message, 'access_token' => $access_token], 201);
+                DB::table('otp_verifies')->where([
+                    'email' => $pre_data->email
+                ])->delete();
             } else {
                 $message = 'Opps! Something went wrong';
                 return response()->json($message, 422);
@@ -137,7 +140,7 @@ class UserController extends Controller
     {
         $user = User::all();
         return response()->json($user, 201);
-    } 
+    }
 
     public function update(Request $request, $id)
     {
@@ -154,7 +157,7 @@ class UserController extends Controller
         $user->phone = $request->phone;
         if ($request->hasFile('photo')) {
             $photo = $request->file('photo');
-            if(file_exists($user->photo)){
+            if (file_exists($user->photo)) {
                 unlink(base_path("public/assets/uploads/user_photos/.$user->photo"));
             }
             $photo_name = 'photo_' . rand() . '.' . $photo->getClientOriginalExtension();
