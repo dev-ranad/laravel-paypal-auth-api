@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Session;
+use Image;
 
 class UserController extends Controller
 {
@@ -36,9 +37,10 @@ class UserController extends Controller
             } else {
                 $otp = rand(1000, 9999);
                 Log::info("otp = " . $otp);
-                $insert = DB::table('password_resets')->insert([
+                $insert = DB::table('otp_verifies')->insert([
                     'email' => $data['email'],
-                    'token' => $otp,
+                    'otp' => $otp,
+                    'data' => json_encode($data),
                     'created_at' => Carbon::now()
                 ]);
 
@@ -64,32 +66,31 @@ class UserController extends Controller
 
     public function varify_user(Request $request)
     {
-        $check_token = DB::table('password_resets')->where([
-            'email' => $request->email,
-            'token' => $request->otp
+        $check_token = DB::table('otp_verifies')->where([
+            'otp' => $request->otp
         ])->first();
         if (!$check_token) {
             return response(["status" => 401, 'message' => 'Invalid']);
         } else {
-            $data = Session::get('data');
+
+            $pre_data = json_decode($check_token->data);
             $user = new User();
-            $user->first_name = $data['first_name'];
-            $user->last_name = $data['last_name'];
-            $user->username = $data['username'];
-            $user->phone = $data['phone'];
-            $user->email = $data['email'];
-            $user->password = Hash::make($data['password']);
-            if ($data['password'] === $data['confirm_password']) {
+            $user->first_name = $pre_data->first_name;
+            $user->last_name = $pre_data->last_name;
+            $user->username = $pre_data->username;
+            $user->phone = $pre_data->phone;
+            $user->email = $pre_data->email;
+            $user->password = Hash::make($pre_data->password);
+            if ($pre_data->password === $pre_data->confirm_password) {
                 $user->save();
             } else {
                 return response()->json('Confirm Password Not Match!', 422);
             }
 
-
-            if (Auth::attempt(['email' => $data['email'], 'password' => $data['password']])) {
-                $user = User::where('email', $data['email'])->first();
-                $access_token = $user->createToken($data['email'])->accessToken;
-                User::where('email', $data['email'])->update(['access_token' => $access_token]);
+            if (Auth::attempt(['email' => $pre_data->email, 'password' => $pre_data->password])) {
+                $user = User::where('email', $pre_data->email)->first();
+                $access_token = $user->createToken($pre_data->email)->accessToken;
+                User::where('email', $pre_data->email)->update(['access_token' => $access_token]);
                 $message = 'User Successfully Registerd';
                 return response()->json([$message, 'access_token' => $access_token], 201);
             } else {
@@ -132,5 +133,35 @@ class UserController extends Controller
         return response()->json($message, 201);
     }
 
-
+    public function update(Request $request, $id)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'phone' => 'numeric',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+        $user = User::findOrFail($id);
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->phone = $request->phone;
+        if ($request->hasFile('photo')) {
+            $photo = $request->file('photo');
+            if(file_exists($user->photo)){
+                unlink(base_path("public/assets/uploads/user_photos/.$user->photo"));
+            }
+            $photo_name = 'photo_' . rand() . '.' . $photo->getClientOriginalExtension();
+            $photo_resize = Image::make($photo->getRealPath());
+            $photo_resize->resize(512, 512);
+            $photo_resize->save(public_path("assets/uploads/user_photos/$photo_name"));
+            $user->photo = $photo_name;
+        }
+        $user->update();
+        return response()->json([
+            "success" => true,
+            "message" => "User updated successfully.",
+            "data" => $user
+        ]);
+    }
 }
