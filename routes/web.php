@@ -25,5 +25,8 @@ Route::controller(HomeController::class)->group(function () {
 */
 
 Route::controller(DashboardController::class)->prefix('admin')->group(function () {
-    Route::get('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/login', 'login')->name('login')->middleware('logout');
+    Route::post('/entry', 'entry')->name('entry');
+    Route::get('/exit', 'exit')->name('exit');
+    Route::get('/dashboard', 'dashboard')->name('dashboard')->middleware('login');
 });

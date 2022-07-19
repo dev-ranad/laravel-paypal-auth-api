@@ -21,7 +21,6 @@ Route::controller(UserController::class)->middleware('api')->group(function () {
     Route::post('/login', 'login');
     Route::post('/register', 'register');
     Route::post('/varify/user', 'varify_user')->name('varify.user');
-    Route::delete('{id}/logout', 'logout');
 });
 
 Route::controller(PaymentController::class)->group(function () {
@@ -31,5 +30,7 @@ Route::controller(PaymentController::class)->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
+    Route::get('/logout', [UserController::class, 'logout']);
+    Route::get('/dashboard', [UserController::class, 'dashboard']);
     Route::post('user/update/{id}', [UserController::class, 'update']);
 });

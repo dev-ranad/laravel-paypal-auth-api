@@ -69,12 +69,14 @@ class PaymentController extends Controller
                 return $response->getMessage();
             }
         } else {
-            return 'Payment declined!!';
+            $message = 'Payment declined!!';
+            return response()->json($message, 201);
         }
     }
 
     public function error()
     {
-        return 'User declined the payment!';
+        $message = 'User declined the payment!';
+        return response()->json($message, 201);
     }
 }

@@ -125,13 +125,19 @@ class UserController extends Controller
         }
     }
 
-    public function logout($id)
+    public function logout(Request $request)
     {
-        $user = User::findOrFail($id);
-        $user->delete();
+        $token = $request->user()->token();
+        $token->revoke();
         $message = 'User Successfully Logout';
         return response()->json($message, 201);
     }
+
+    public function dashboard()
+    {
+        $user = User::all();
+        return response()->json($user, 201);
+    } 
 
     public function update(Request $request, $id)
     {
