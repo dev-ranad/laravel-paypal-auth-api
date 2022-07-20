@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'home')->name('home');
-    Route::post('pay', 'pay')->name('payment');
+    Route::post('payment', 'web_payment')->name('web.payment');
     // Route::get('success', 'success');
     // Route::get('error', 'error');
 });

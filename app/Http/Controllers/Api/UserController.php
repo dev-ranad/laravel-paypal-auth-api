@@ -69,11 +69,10 @@ class UserController extends Controller
         $check_token = DB::table('otp_verifies')->where([
             'otp' => $request->otp
         ])->first();
+        $pre_data = json_decode($check_token->data);
         if (!$check_token) {
             return response(["status" => 401, 'message' => 'Invalid']);
         } else {
-
-            $pre_data = json_decode($check_token->data);
             $user = new User();
             $user->first_name = $pre_data->first_name;
             $user->last_name = $pre_data->last_name;
@@ -93,13 +92,12 @@ class UserController extends Controller
                 User::where('email', $pre_data->email)->update(['access_token' => $access_token]);
                 $message = 'User Successfully Registerd';
                 return response()->json([$message, 'access_token' => $access_token], 201);
-                DB::table('otp_verifies')->where([
-                    'email' => $pre_data->email
-                ])->delete();
             } else {
                 $message = 'Opps! Something went wrong';
                 return response()->json($message, 422);
             }
+            $verify = DB::table('otp_verifies')->where('email', $check_token->email)->first();
+            $verify->delete();
         }
     }
 
